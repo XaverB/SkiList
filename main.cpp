@@ -25,8 +25,18 @@ void test_list() {
 	assert_equals(list.get(3), 3);
 	assert_equals(list.get(4), 4);
 
-	list.remove(2);
+
+	list.remove(1);
+	assert_equals(list.get(1), int{});
+
+	/*list.remove(2);
 	assert_equals(list.get(2), int{});
+
+	list.remove(3);
+	assert_equals(list.get(3), int{});
+
+	list.remove(4);
+	assert_equals(list.get(4), int{});*/
 }
 
 int main() {
