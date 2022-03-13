@@ -13,7 +13,7 @@ private:
 	using value_type = T;
 	using key_type = K;
 	using node = skiplistnode<value_type, key_type>;
-	using nodeptr = std::shared_ptr<node>;
+	using nodeptr = node*;
 	using forward_table = nodeptr*;
 
 	/// <summary>
@@ -50,84 +50,88 @@ private:
 	// -- random level end
 
 public:
-	skiplist() : level(0),head(nullptr/*std::make_shared<skiplistnode<T, K>>(new skiplistnode<T, K>{ K{}, T{}, 0 })*/) {
+	skiplist() : level(0), head(nullptr) {
 		initialize_srand_if_necessary();
 	};
 	~skiplist() { };
 
 	value_type get(key_type key) {
-		std::shared_ptr<skiplistnode<T, K>> x = head;
-		for (int i = level; i <= 1; i--) {
-			while ((*x)[i] != nullptr && (*x)[i]->get_key() < key) {
-				x = (*x)[i];
+		nodeptr x = head;
+		if (x->get_key() == key)
+			return x->get_value();
+
+		for (int i = level; i >= 1; i--) {
+			while (x->get_forward(i) != nullptr && x->get_forward(i)->get_key() < key) {
+				x = x->get_forward(i);
 			}
 		}
-		x = (*x)[0];
-		return x->get_key() == key ? x->get_value() : default(value_type);
-		return nullptr;
+		x = x->get_forward(1);
+		if (x == nullptr)
+			return T{};
+
+		return x->get_key() == key ? x->get_value() : T{};
 	}
 
 
 	void insert(key_type key, value_type value) {
-		auto update = new std::shared_ptr<skiplistnode<value_type, key_type>>[MAX_LEVEL] {};
-		//for (int i = 0; i < MAX_LEVEL; i++) {
-		//	update[i] = std::make_shared<node>(nullptr);
-		//}
+		forward_table update = new nodeptr[MAX_LEVEL];
+		nodeptr x = head;
+		if (x == nullptr) {
+			head = new node(key, value, 1);
+			return;
+		}
 
-		std::shared_ptr<skiplistnode<T, K>> x = head;
-		for (int i = level; i <= 1; i--) {
-			while ((*x)[i]->get_key() < key) {
-				x = (*x)[i];
+
+		for (int i = level; i >= 1; i--) {
+			while (x->get_forward(i) != nullptr && x->get_forward(i)->get_key() < key) {
+				x = x->get_forward(i);
 			}
 			update[i] = x;
 		}
-		x = (*x)[0];
+		x = x->get_forward(1);
 
 		// update node value because given key already exists
-		if (x->get_key() == key) {
+		if (x != nullptr && x->get_key() == key) {
 			x->set_value(value);
 		}
 		// key not found -> insert new node
 		else {
 			int new_level = get_random_level();
 			if (new_level > level) {
-				for (int i = level + 1; i < new_level; i++) {
+				for (int i = level + 1; i <= new_level; i++) {
 					update[i] = head;
 				}
 				level = new_level;
 			}
-			//node* n;
-			//n = new skiplistnode<T, K>();// = skiplistnode<value_type, key_type>{}; //{key, value, level};
-			skiplistnode<value_type, key_type>* n2 = new skiplistnode<value_type, key_type>(key, value, level);
-			/*std::shared_ptr<skiplistnode<value_type, key_type>> y = std::make_shared<skiplistnode<value_type, key_type>>(nullptr);*/
 
-			//for (int i = 0; i < new_level; i++) {
-			//	(*y)[i] = (*update[i]).get_forward(i);
-			//	(*update[i]).get_forward(i) = y;
-			//}
+			x = new node(key, value, level);
+			for (int i = 1; i <= new_level; i++) {
+				x->set_forward(i, update[i]->get_forward(i));
+				update[i]->set_forward(i, x);
+			}
 		}
 		delete[] update;
 	}
 
 	void remove(key_type key) {
-		//skiplistnode<T, K>* update = new skiplistnode<T, K>[MAX_LEVEL]{};
-		//std::shared_ptr < skiplistnode<T, K>> x = head;
-		//for (int i = level; i <= 1; i++) {
-		//	while ((*x)[i]->get_key() < key) {
-		//		x = (*x)[i];
-		//	}
-		//	update[i] = x;
-		//}
-		//x = (*x)[1];
-		//for (int i = 1; i < level; i++) {
-		//	if (update[i]->get_forward(i) != (*x)[i]) break;
-		//	update[i]->get_forward[i] = (*x)[i];
-		//}
-		//delete x;
-		//x = nullptr;
-		//while (level > 1 && head[level] == nullptr) {
-		//	level--;
-		//}
-		//delete[] update;
+		forward_table update = new nodeptr[MAX_LEVEL];
+		nodeptr x = head;
+		for (int i = level; i <= 0; i++) {
+			while (x[i]->get_key() < key) {
+				x = x[i];
+			}
+			update[i] = x;
+		}
+		x = x[1];
+		for (int i = 1; i < level; i++) {
+			if (update[i]->get_forward(i) != x[i]) break;
+			update[i]->set_forward(i, x[i]);
+		}
+		delete x;
+		x = nullptr;
+		while (level > 1 && head[level] == nullptr) {
+			level--;
+		}
+		delete[] update;
 	}
 };

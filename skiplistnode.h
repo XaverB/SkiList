@@ -3,6 +3,8 @@
 #include <memory>
 #include <cassert>
 
+//#define MAX_LEVEL = 36;
+
 template<typename T, typename K>
 class skiplistnode {
 private:
@@ -11,7 +13,7 @@ private:
 	using value_type = T;
 	using key_type = K;
 	using node = skiplistnode<value_type, key_type>;
-	using nodeptr = std::shared_ptr<node>;
+	using nodeptr = node*;
 	using forward_table = nodeptr*;
 
 	int level;
@@ -21,9 +23,11 @@ private:
 	forward_table forward;
 
 	void init_forwards() {
-		forward = new std::shared_ptr<skiplistnode<value_type, key_type>>[MAX_LEVEL] {};
+		/*nodeptr update[MAX_LEVEL]{};*/
+
+		forward = new nodeptr[MAX_LEVEL] {};
 		for (int i = 0; i < MAX_LEVEL; i++) {
-			forward[i] = std::make_shared<node>(nullptr/*K{}, T{}, 0*/);
+			forward[i] = nullptr;
 		}
 	}
 
@@ -51,6 +55,10 @@ public:
 	nodeptr get_forward(int forward_index) {
 		assert(forward_index <= MAX_LEVEL);
 		return forward[forward_index];
+	}
+
+	void set_forward(int forward_index, nodeptr value) {
+		forward[forward_index] = value;
 	}
 
 	nodeptr operator[](int forward_index) {
