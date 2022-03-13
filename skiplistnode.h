@@ -53,7 +53,7 @@ public:
 	void set_value(value_type value) { this->value = value; }
 
 	nodeptr get_forward(int forward_index) {
-		assert(forward_index <= MAX_LEVEL);
+		/*assert(forward_index <= MAX_LEVEL);*/
 		return forward[forward_index];
 	}
 

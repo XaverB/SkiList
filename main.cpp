@@ -24,6 +24,9 @@ void test_list() {
 	assert_equals(list.get(2), 2);
 	assert_equals(list.get(3), 3);
 	assert_equals(list.get(4), 4);
+
+	list.remove(2);
+	assert_equals(list.get(2), int{});
 }
 
 int main() {

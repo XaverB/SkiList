@@ -114,24 +114,32 @@ public:
 	}
 
 	void remove(key_type key) {
-		forward_table update = new nodeptr[MAX_LEVEL];
+		forward_table update = new nodeptr[MAX_LEVEL]{};
 		nodeptr x = head;
+		if (x == nullptr)
+			return;
+
 		for (int i = level; i <= 0; i++) {
-			while (x[i]->get_key() < key) {
-				x = x[i];
+			while (x->get_forward(i) != nullptr && x->get_forward(i)->get_key() < key) {
+				x = x->get_forward(i);
 			}
 			update[i] = x;
 		}
-		x = x[1];
-		for (int i = 1; i < level; i++) {
-			if (update[i]->get_forward(i) != x[i]) break;
-			update[i]->set_forward(i, x[i]);
+		x = x->get_forward(1);
+		if (x->get_key() == key) {
+			for (int i = 1; i <= level; i++) {
+				if (update[i] == nullptr || update[i]->get_forward(i) == nullptr || x->get_forward(i) == nullptr ||
+					update[i]->get_forward(i) != x->get_forward(i)) {
+					break;
+				}
+				update[i]->set_forward(i, x->get_forward(i));
+			}
+			delete x;
+			x = nullptr;
+			while (level > 1 && head->get_forward(level) == nullptr) {
+				level--;
+			}
+			delete[] update;
 		}
-		delete x;
-		x = nullptr;
-		while (level > 1 && head[level] == nullptr) {
-			level--;
-		}
-		delete[] update;
 	}
 };
